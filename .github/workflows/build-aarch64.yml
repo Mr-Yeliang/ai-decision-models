@@ -1,0 +1,41 @@
+name: build-aarch64-wheels
+
+# 只允许手动触发，避免每次 push 都跑
+on:
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Target CPython tag (cp39 = 3.9)'
+        default: 'cp39'
+        required: false
+
+jobs:
+  build:
+    # GitHub 原生 ARM64 运行器
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build wheels inside manylinux2014_aarch64
+        run: |
+          mkdir -p wheels
+          docker run --rm -v $PWD:/io -w /io \
+            quay.io/pypa/manylinux2014_aarch64 \
+            bash -c "
+              PY=/opt/python/cp39-cp39/bin/python
+              \$PY -m pip install --upgrade pip wheel setuptools Cython &&
+              \$PY -m pip wheel --wheel-dir=/io/wheels -r /io/requirements.txt
+            "
+
+      - name: List built wheels
+        run: ls -lh wheels/
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-aarch64-cp39
+          path: wheels/*.whl
+          if-no-files-found: error   # 没编出来就直接红，不糊弄
+          retention-days: 7
