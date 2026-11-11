@@ -39,3 +39,15 @@ jobs:
           path: wheels/*.whl
           if-no-files-found: error   # 没编出来就直接红，不糊弄
           retention-days: 7
+      - name: Download Miniconda for aarch64
+        run: |
+          curl -L -o /tmp/miniconda.sh \
+            https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh
+          ls -lh /tmp/miniconda.sh
+
+      - name: Upload Miniconda installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: miniconda-aarch64
+          path: /tmp/miniconda.sh
+          if-no-files-found: error
